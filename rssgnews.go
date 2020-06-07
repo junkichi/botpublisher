@@ -1,19 +1,18 @@
 package main
 
 import (
+	"botpublisher/storage"
 	"fmt"
 	"time"
 
 	"github.com/mmcdole/gofeed"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var googleNewsRssURL = "https://news.google.com/rss/search?q=%E6%B5%A6%E5%AE%89&hl=ja&gl=JP&ceid=JP:ja"
-var googleNewsDbID = "test"
-var googleNewsDbCOL = "rss"
+var googleNewsCOL = "rss"
 
-func initGoogleNewsRSS(c mongo.Client) bool {
-	col := c.Database(googleNewsDbID).Collection(googleNewsDbCOL)
+func initGoogleNewsRSS() bool {
+	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := RetrieveRSS(googleNewsRssURL, &items)
 	if err != nil {
@@ -24,13 +23,13 @@ func initGoogleNewsRSS(c mongo.Client) bool {
 	n := 0
 	skip := 0
 	for _, item := range items {
-		found, err := DBFindRSS(col, item.Link)
+		found, err := storage.FindRSS(s, googleNewsCOL, item.Link)
 		if found == true {
 			skip++
 			continue
 		}
 		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 MST", item.Published)
-		err = DBInsertRSS(col, item.Title, item.Link, item.Description, pubdate)
+		err = storage.InsertRSS(s, googleNewsCOL, item.Title, item.Link, item.Description, pubdate)
 		if err != nil {
 			fmt.Println("insert error:", err)
 			continue
@@ -43,9 +42,8 @@ func initGoogleNewsRSS(c mongo.Client) bool {
 	return true
 }
 
-func collectGoogleNewsRSS(c mongo.Client) bool {
-	pcol := c.Database(publishDbID).Collection(publishDbCOL)
-	col := c.Database(googleNewsDbID).Collection(googleNewsDbCOL)
+func collectGoogleNewsRSS() bool {
+	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := RetrieveRSS(googleNewsRssURL, &items)
 	if err != nil {
@@ -56,19 +54,19 @@ func collectGoogleNewsRSS(c mongo.Client) bool {
 	n := 0
 	skip := 0
 	for _, item := range items {
-		found, err := DBFindRSS(col, item.Link)
+		found, err := storage.FindRSS(s, googleNewsCOL, item.Link)
 		if found == true {
 			skip++
 			continue
 		}
 		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 MST", item.Published)
-		err = DBInsertRSS(col, item.Title, item.Link, item.Description, pubdate)
+		err = storage.InsertRSS(s, googleNewsCOL, item.Title, item.Link, item.Description, pubdate)
 		if err != nil {
 			fmt.Println("insert error:", err)
 			continue
 		}
 		desc := fmt.Sprintln("(News)", item.Title, item.Link)
-		err = DBInsertPublish(pcol, desc)
+		err = storage.InsertPublish(s, publishCOL, desc)
 		if err != nil {
 			fmt.Println("insert error:", err)
 		}

@@ -1,32 +1,32 @@
 package main
 
 import (
+	"botpublisher/storage"
 	"fmt"
 	"time"
 
 	"github.com/ChimeraCoder/anaconda"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var urayasuTagTweetDbID = "test"
-var urayasuTagTweetDbCOL = "tweet"
+var urayasuTagTweetCOL = "tweet"
 
-func initUrayasuTagTweet(c mongo.Client, api *anaconda.TwitterApi, query string) {
-	col := c.Database(urayasuTagTweetDbID).Collection(urayasuTagTweetDbCOL)
+func initUrayasuTagTweet(api *anaconda.TwitterApi, query string) {
+	s := storage.GetInstance()
+
 	var tweets []anaconda.Tweet
 	TWSearchTweet(api, query, &tweets)
 
 	n := 0
 	skip := 0
 	for _, tweet := range tweets {
-		found, err := DBFindTweet(col, tweet.User.ScreenName, tweet.IdStr)
+		found, err := storage.FindTweet(s, urayasuTagTweetCOL, tweet.User.ScreenName, tweet.IdStr)
 		if found == true {
 			skip++
 			continue
 		}
 		link := fmt.Sprintf("https://twitter.com/%s/status/%s", tweet.User.ScreenName, tweet.IdStr)
 		pubdate, _ := time.Parse("Mon Jan 2 15:04:05 -0700 2006", tweet.CreatedAt)
-		err = DBInsertTweet(col,
+		err = storage.InsertTweet(s, urayasuTagTweetCOL,
 			tweet.User.Name,
 			tweet.User.ScreenName,
 			tweet.IdStr,
@@ -43,23 +43,22 @@ func initUrayasuTagTweet(c mongo.Client, api *anaconda.TwitterApi, query string)
 	fmt.Println("[utag] inserted:", n)
 }
 
-func collectUrayasuTagTweet(c mongo.Client, api *anaconda.TwitterApi, query string) {
-	pcol := c.Database(publishDbID).Collection(publishDbCOL)
-	col := c.Database(urayasuTagTweetDbID).Collection(urayasuTagTweetDbCOL)
+func collectUrayasuTagTweet(api *anaconda.TwitterApi, query string) {
+	s := storage.GetInstance()
 	var tweets []anaconda.Tweet
 	TWSearchTweet(api, query, &tweets)
 
 	n := 0
 	skip := 0
 	for _, tweet := range tweets {
-		found, err := DBFindTweet(col, tweet.User.ScreenName, tweet.IdStr)
+		found, err := storage.FindTweet(s, urayasuTagTweetCOL, tweet.User.ScreenName, tweet.IdStr)
 		if found == true {
 			skip++
 			continue
 		}
 		link := fmt.Sprintf("https://twitter.com/%s/status/%s", tweet.User.ScreenName, tweet.IdStr)
 		pubdate, _ := time.Parse("Mon Jan 2 15:04:05 -0700 2006", tweet.CreatedAt)
-		err = DBInsertTweet(col,
+		err = storage.InsertTweet(s, urayasuTagTweetCOL,
 			tweet.User.Name,
 			tweet.User.ScreenName,
 			tweet.IdStr,
@@ -71,7 +70,7 @@ func collectUrayasuTagTweet(c mongo.Client, api *anaconda.TwitterApi, query stri
 			continue
 		}
 		desc := fmt.Sprintln("(浦安タグ)", tweet.User.Name, link)
-		err = DBInsertPublish(pcol, desc)
+		err = storage.InsertPublish(s, publishCOL, desc)
 		if err != nil {
 			fmt.Println("insert error:", err)
 		}

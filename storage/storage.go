@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"context"
@@ -37,7 +37,47 @@ type PublishFields struct {
 	CreatedAt   time.Time `json:"createdDate"`
 }
 
-func DBConnect(dburl string) mongo.Client {
+type Storage struct {
+	c     mongo.Client
+	dburl string
+	db    *mongo.Database
+	dbid  string
+}
+
+var dbUrl string
+var dbId string
+var sharedInstance *Storage
+
+func newStorage() *Storage {
+	if dbUrl == "" {
+		return nil
+	}
+
+	fmt.Println("newStorage: ", dbUrl, dbId)
+	c := connect(dbUrl)
+	db := c.Database(dbId)
+	return &Storage{c, dbUrl, db, dbId}
+}
+
+func SetConfig(dburl string, dbid string) {
+	dbUrl = dburl
+	dbId = dbid
+}
+
+func GetInstance() *Storage {
+	if sharedInstance == nil {
+		sharedInstance = newStorage()
+	}
+	return sharedInstance
+}
+
+func TermInstance() {
+	if sharedInstance != nil {
+		disconnect(sharedInstance.c)
+	}
+}
+
+func connect(dburl string) mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	c, err := mongo.Connect(ctx, options.Client().ApplyURI(dburl))
@@ -50,7 +90,7 @@ func DBConnect(dburl string) mongo.Client {
 	return *c
 }
 
-func DBDisconnect(c mongo.Client) {
+func disconnect(c mongo.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := c.Disconnect(ctx)
@@ -61,7 +101,9 @@ func DBDisconnect(c mongo.Client) {
 	}
 }
 
-func DBInsertRSS(col *mongo.Collection, title string, link string, desc string, pubdate time.Time) error {
+func InsertRSS(s *Storage, colid string, title string, link string, desc string, pubdate time.Time) error {
+	col := s.db.Collection(colid)
+
 	doc := RssFields{
 		Title:       title,
 		Link:        link,
@@ -74,7 +116,9 @@ func DBInsertRSS(col *mongo.Collection, title string, link string, desc string, 
 	return err
 }
 
-func DBFindRSS(col *mongo.Collection, link string) (bool, error) {
+func FindRSS(s *Storage, colid string, link string) (bool, error) {
+	col := s.db.Collection(colid)
+
 	filter := struct {
 		Link string
 	}{link}
@@ -89,7 +133,9 @@ func DBFindRSS(col *mongo.Collection, link string) (bool, error) {
 	return true, err
 }
 
-func DBInsertTweet(col *mongo.Collection, name string, user string, id string, link string, desc string, pubdate time.Time) error {
+func InsertTweet(s *Storage, colid string, name string, user string, id string, link string, desc string, pubdate time.Time) error {
+	col := s.db.Collection(colid)
+
 	doc := TweetFields{
 		Name:        name,
 		User:        user,
@@ -104,7 +150,9 @@ func DBInsertTweet(col *mongo.Collection, name string, user string, id string, l
 	return err
 }
 
-func DBFindTweet(col *mongo.Collection, user string, id string) (bool, error) {
+func FindTweet(s *Storage, colid string, user string, id string) (bool, error) {
+	col := s.db.Collection(colid)
+
 	filter := struct {
 		User string
 		Id   string
@@ -120,7 +168,9 @@ func DBFindTweet(col *mongo.Collection, user string, id string) (bool, error) {
 	return true, err
 }
 
-func DBInsertPublish(col *mongo.Collection, desc string) error {
+func InsertPublish(s *Storage, colid string, desc string) error {
+	col := s.db.Collection(colid)
+
 	doc := PublishFields{
 		Description: desc,
 		CreatedAt:   time.Now(),
@@ -130,7 +180,9 @@ func DBInsertPublish(col *mongo.Collection, desc string) error {
 	return err
 }
 
-func DBFindPublish(col *mongo.Collection) (string, error) {
+func FindPublish(s *Storage, colid string) (string, error) {
+	col := s.db.Collection(colid)
+
 	var doc struct {
 		Description string             `json:"description"`
 		ID          primitive.ObjectID `json:"id" bson:"_id"`

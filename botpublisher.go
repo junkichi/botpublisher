@@ -10,8 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"botpublisher/storage"
+
 	"github.com/ChimeraCoder/anaconda"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PublisherConfig struct {
@@ -36,12 +37,11 @@ type UrayasuTagConfig struct {
 	Query string `json:"query"`
 }
 
-var publishDbID = "test"
-var publishDbCOL = "publish"
+var publishCOL = "publish"
 
-func publishDescription(c mongo.Client, api *anaconda.TwitterApi) {
-	col := c.Database(publishDbID).Collection(publishDbCOL)
-	desc, err := DBFindPublish(col)
+func publishDescription(api *anaconda.TwitterApi) {
+	s := storage.GetInstance()
+	desc, err := storage.FindPublish(s, publishCOL)
 	if err != nil {
 		return
 	}
@@ -58,17 +58,14 @@ func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 		publisherConfig.TwitterConfig.ConsumerKey,
 		publisherConfig.TwitterConfig.ConsumerSecret)
 
-	c := DBConnect("mongodb://localhost:27017")
-
 	for {
 		select {
 		case <-stopCh:
 			fmt.Println("publishWorker: stop request received.")
-			DBDisconnect(c)
 			return
 		case t := <-ticker.C:
 			fmt.Println("=== Publish <", t, "> ===")
-			publishDescription(c, api)
+			publishDescription(api)
 		}
 	}
 }
@@ -82,39 +79,32 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 		publisherConfig.TwitterConfig.ConsumerKey,
 		publisherConfig.TwitterConfig.ConsumerSecret)
 
-	c := DBConnect("mongodb://localhost:27017")
-
-	result := initUrayasuRSS(c)
+	result := initUrayasuRSS()
 	if result == false {
-		DBDisconnect(c)
 		return
 	}
-	result = initGoogleNewsRSS(c)
+	result = initGoogleNewsRSS()
 	if result == false {
-		DBDisconnect(c)
 		return
 	}
-	initUrayasuTagTweet(c, api, publisherConfig.UrayasuTagConfig.Query)
+	initUrayasuTagTweet(api, publisherConfig.UrayasuTagConfig.Query)
 
 	for {
 		select {
 		case <-stopCh:
 			fmt.Println("collectWorker: stop request received.")
-			DBDisconnect(c)
 			return
 		case t := <-ticker.C:
 			fmt.Println("=== Collect <", t, "> ===")
-			result := collectUrayasuRSS(c)
+			result := collectUrayasuRSS()
 			if result == false {
-				DBDisconnect(c)
 				return
 			}
-			result = collectGoogleNewsRSS(c)
+			result = collectGoogleNewsRSS()
 			if result == false {
-				DBDisconnect(c)
 				return
 			}
-			collectUrayasuTagTweet(c, api, publisherConfig.UrayasuTagConfig.Query)
+			collectUrayasuTagTweet(api, publisherConfig.UrayasuTagConfig.Query)
 		}
 	}
 }
@@ -138,6 +128,7 @@ func main() {
 
 	var publisherConfig PublisherConfig
 	json.Unmarshal(confFile, &publisherConfig)
+	storage.SetConfig("mongodb://localhost:27017", "test")
 
 	doneCh := make(chan struct{})
 	stopCh := make(chan struct{})
@@ -158,4 +149,5 @@ func main() {
 	publishTicker.Stop()
 	close(stopCh)
 	wg.Wait()
+	storage.TermInstance()
 }
