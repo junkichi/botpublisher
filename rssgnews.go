@@ -1,6 +1,7 @@
 package main
 
 import (
+	"botpublisher/rss"
 	"botpublisher/storage"
 	"fmt"
 	"time"
@@ -14,7 +15,7 @@ var googleNewsCOL = "rss"
 func initGoogleNewsRSS() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
-	err := RetrieveRSS(googleNewsRssURL, &items)
+	err := rss.RetrieveRSS(googleNewsRssURL, &items)
 	if err != nil {
 		fmt.Println("retrieve err:", err)
 		return false
@@ -45,7 +46,7 @@ func initGoogleNewsRSS() bool {
 func collectGoogleNewsRSS() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
-	err := RetrieveRSS(googleNewsRssURL, &items)
+	err := rss.RetrieveRSS(googleNewsRssURL, &items)
 	if err != nil {
 		fmt.Println("retrieve err:", err)
 		return false
