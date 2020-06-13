@@ -12,7 +12,9 @@ import (
 var googleNewsRssURL = "https://news.google.com/rss/search?q=%E6%B5%A6%E5%AE%89&hl=ja&gl=JP&ceid=JP:ja"
 var googleNewsCOL = "rss"
 
-func initGoogleNewsRSS() bool {
+type GoogleNewsRSS struct{}
+
+func (GoogleNewsRSS) Init() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(googleNewsRssURL, &items)
@@ -43,7 +45,7 @@ func initGoogleNewsRSS() bool {
 	return true
 }
 
-func collectGoogleNewsRSS() bool {
+func (GoogleNewsRSS) Collect() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(googleNewsRssURL, &items)

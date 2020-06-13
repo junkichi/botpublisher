@@ -64,16 +64,20 @@ func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 	}
 }
 
+type RssCollector interface {
+	Init() bool
+	Collect() bool
+}
+
 func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
 	defer func() { wg.Done() }()
 
-	result := initUrayasuRSS()
-	if result == false {
-		return
-	}
-	result = initGoogleNewsRSS()
-	if result == false {
-		return
+	rssCollectors := []RssCollector{GoogleNewsRSS{}, UrayasuRSS{}}
+	for _, rssCollector := range rssCollectors {
+		result := rssCollector.Init()
+		if result == false {
+			return
+		}
 	}
 	initUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
 
@@ -84,13 +88,11 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 			return
 		case t := <-ticker.C:
 			fmt.Println("=== Collect <", t, "> ===")
-			result := collectUrayasuRSS()
-			if result == false {
-				return
-			}
-			result = collectGoogleNewsRSS()
-			if result == false {
-				return
+			for _, rssCollector := range rssCollectors {
+				result := rssCollector.Collect()
+				if result == false {
+					fmt.Println("collectWorker: collect error")
+				}
 			}
 			collectUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
 		}

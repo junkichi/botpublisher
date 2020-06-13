@@ -12,7 +12,9 @@ import (
 var urayasuRssURL = "http://www.city.urayasu.lg.jp/news.rss"
 var urayasuRssCOL = "rss"
 
-func initUrayasuRSS() bool {
+type UrayasuRSS struct{}
+
+func (UrayasuRSS) Init() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(urayasuRssURL, &items)
@@ -43,7 +45,7 @@ func initUrayasuRSS() bool {
 	return true
 }
 
-func collectUrayasuRSS() bool {
+func (UrayasuRSS) Collect() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(urayasuRssURL, &items)
