@@ -69,23 +69,42 @@ type RssCollector interface {
 	Collect() bool
 }
 
-type TweetCollector interface {
-	GetQuery() string
-	Init(string)
-	Collect(string)
-}
-
-func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
+func rssCollectWorker(rssCollectors []RssCollector, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
 	defer func() { wg.Done() }()
 
-	rssCollectors := []RssCollector{GoogleNewsRSS{}, UrayasuRSS{}}
 	for _, rssCollector := range rssCollectors {
 		result := rssCollector.Init()
 		if result == false {
 			return
 		}
 	}
-	twCollectors := []TweetCollector{UrayasuTagTweet{publisherConfig.UrayasuTagConfig.Query}}
+
+	for {
+		select {
+		case <-stopCh:
+			fmt.Println("rssCollectWorker: stop request received.")
+			return
+		case t := <-ticker.C:
+			fmt.Println("=== RSS Collect <", t, "> ===")
+			for _, rssCollector := range rssCollectors {
+				result := rssCollector.Collect()
+				if result == false {
+					fmt.Println("collectWorker: collect error")
+				}
+			}
+		}
+	}
+}
+
+type TweetCollector interface {
+	GetQuery() string
+	Init(string)
+	Collect(string)
+}
+
+func tweetCollectWorker(twCollectors []TweetCollector, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
+	defer func() { wg.Done() }()
+
 	for _, twCollector := range twCollectors {
 		twCollector.Init(twCollector.GetQuery())
 	}
@@ -93,16 +112,10 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 	for {
 		select {
 		case <-stopCh:
-			fmt.Println("collectWorker: stop request received.")
+			fmt.Println("tweetCollectWorker: stop request received.")
 			return
 		case t := <-ticker.C:
-			fmt.Println("=== Collect <", t, "> ===")
-			for _, rssCollector := range rssCollectors {
-				result := rssCollector.Collect()
-				if result == false {
-					fmt.Println("collectWorker: collect error")
-				}
-			}
+			fmt.Println("=== Tweet Collect <", t, "> ===")
 			for _, twCollector := range twCollectors {
 				twCollector.Collect(twCollector.GetQuery())
 			}
@@ -140,9 +153,15 @@ func main() {
 	stopCh := make(chan struct{})
 	wg := sync.WaitGroup{}
 
-	collectTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Collect) * time.Second)
+	rssCollectors := []RssCollector{GoogleNewsRSS{}, UrayasuRSS{}}
+	rssCollectTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Collect) * time.Second)
 	wg.Add(1)
-	go collectWorker(publisherConfig, collectTicker, stopCh, &wg)
+	go rssCollectWorker(rssCollectors, rssCollectTicker, stopCh, &wg)
+
+	twCollectors := []TweetCollector{UrayasuTagTweet{publisherConfig.UrayasuTagConfig.Query}}
+	twCollectTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Collect) * time.Second)
+	wg.Add(1)
+	go tweetCollectWorker(twCollectors, twCollectTicker, stopCh, &wg)
 
 	publishTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Publish) * time.Second)
 	wg.Add(1)
@@ -151,7 +170,8 @@ func main() {
 	setupCloseHandler(doneCh)
 
 	<-doneCh
-	collectTicker.Stop()
+	rssCollectTicker.Stop()
+	twCollectTicker.Stop()
 	publishTicker.Stop()
 	close(stopCh)
 	wg.Wait()
