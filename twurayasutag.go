@@ -2,6 +2,7 @@ package main
 
 import (
 	"botpublisher/storage"
+	"botpublisher/twitter"
 	"fmt"
 	"time"
 
@@ -10,11 +11,12 @@ import (
 
 var urayasuTagTweetCOL = "tweet"
 
-func initUrayasuTagTweet(api *anaconda.TwitterApi, query string) {
+func initUrayasuTagTweet(query string) {
 	s := storage.GetInstance()
+	tw := twitter.GetInstance()
 
 	var tweets []anaconda.Tweet
-	TWSearchTweet(api, query, &tweets)
+	twitter.SearchTweet(tw, query, &tweets)
 
 	n := 0
 	skip := 0
@@ -43,10 +45,12 @@ func initUrayasuTagTweet(api *anaconda.TwitterApi, query string) {
 	fmt.Println("[utag] inserted:", n)
 }
 
-func collectUrayasuTagTweet(api *anaconda.TwitterApi, query string) {
+func collectUrayasuTagTweet(query string) {
 	s := storage.GetInstance()
+	tw := twitter.GetInstance()
+
 	var tweets []anaconda.Tweet
-	TWSearchTweet(api, query, &tweets)
+	twitter.SearchTweet(tw, query, &tweets)
 
 	n := 0
 	skip := 0

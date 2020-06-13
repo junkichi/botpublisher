@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"botpublisher/storage"
-
-	"github.com/ChimeraCoder/anaconda"
+	"botpublisher/twitter"
 )
 
 type PublisherConfig struct {
@@ -39,24 +38,19 @@ type UrayasuTagConfig struct {
 
 var publishCOL = "publish"
 
-func publishDescription(api *anaconda.TwitterApi) {
+func publishDescription() {
 	s := storage.GetInstance()
 	desc, err := storage.FindPublish(s, publishCOL)
 	if err != nil {
 		return
 	}
 	fmt.Println("publish:", desc)
-	TWPublishTweet(api, desc)
+	tw := twitter.GetInstance()
+	twitter.PublishTweet(tw, desc)
 }
 
 func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
 	defer func() { wg.Done() }()
-
-	api, _ := TWConnect(
-		publisherConfig.TwitterConfig.AccessToken,
-		publisherConfig.TwitterConfig.AccessTokenSecret,
-		publisherConfig.TwitterConfig.ConsumerKey,
-		publisherConfig.TwitterConfig.ConsumerSecret)
 
 	for {
 		select {
@@ -65,19 +59,13 @@ func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 			return
 		case t := <-ticker.C:
 			fmt.Println("=== Publish <", t, "> ===")
-			publishDescription(api)
+			publishDescription()
 		}
 	}
 }
 
 func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
 	defer func() { wg.Done() }()
-
-	api, _ := TWConnect(
-		publisherConfig.TwitterConfig.AccessToken,
-		publisherConfig.TwitterConfig.AccessTokenSecret,
-		publisherConfig.TwitterConfig.ConsumerKey,
-		publisherConfig.TwitterConfig.ConsumerSecret)
 
 	result := initUrayasuRSS()
 	if result == false {
@@ -87,7 +75,7 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 	if result == false {
 		return
 	}
-	initUrayasuTagTweet(api, publisherConfig.UrayasuTagConfig.Query)
+	initUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
 
 	for {
 		select {
@@ -104,7 +92,7 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 			if result == false {
 				return
 			}
-			collectUrayasuTagTweet(api, publisherConfig.UrayasuTagConfig.Query)
+			collectUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
 		}
 	}
 }
@@ -129,6 +117,11 @@ func main() {
 	var publisherConfig PublisherConfig
 	json.Unmarshal(confFile, &publisherConfig)
 	storage.SetConfig("mongodb://localhost:27017", "test")
+	twitter.SetConfig(
+		publisherConfig.TwitterConfig.AccessToken,
+		publisherConfig.TwitterConfig.AccessTokenSecret,
+		publisherConfig.TwitterConfig.ConsumerKey,
+		publisherConfig.TwitterConfig.ConsumerSecret)
 
 	doneCh := make(chan struct{})
 	stopCh := make(chan struct{})
