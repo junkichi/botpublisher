@@ -69,6 +69,12 @@ type RssCollector interface {
 	Collect() bool
 }
 
+type TweetCollector interface {
+	GetQuery() string
+	Init(string)
+	Collect(string)
+}
+
 func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
 	defer func() { wg.Done() }()
 
@@ -79,7 +85,10 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 			return
 		}
 	}
-	initUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
+	twCollectors := []TweetCollector{UrayasuTagTweet{publisherConfig.UrayasuTagConfig.Query}}
+	for _, twCollector := range twCollectors {
+		twCollector.Init(twCollector.GetQuery())
+	}
 
 	for {
 		select {
@@ -94,7 +103,9 @@ func collectWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 					fmt.Println("collectWorker: collect error")
 				}
 			}
-			collectUrayasuTagTweet(publisherConfig.UrayasuTagConfig.Query)
+			for _, twCollector := range twCollectors {
+				twCollector.Collect(twCollector.GetQuery())
+			}
 		}
 	}
 }

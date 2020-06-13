@@ -11,7 +11,15 @@ import (
 
 var urayasuTagTweetCOL = "tweet"
 
-func initUrayasuTagTweet(query string) {
+type UrayasuTagTweet struct {
+	query string
+}
+
+func (t UrayasuTagTweet) GetQuery() string {
+	return t.query
+}
+
+func (UrayasuTagTweet) Init(query string) {
 	s := storage.GetInstance()
 	tw := twitter.GetInstance()
 
@@ -45,7 +53,7 @@ func initUrayasuTagTweet(query string) {
 	fmt.Println("[utag] inserted:", n)
 }
 
-func collectUrayasuTagTweet(query string) {
+func (UrayasuTagTweet) Collect(query string) {
 	s := storage.GetInstance()
 	tw := twitter.GetInstance()
 
