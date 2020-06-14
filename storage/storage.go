@@ -34,6 +34,7 @@ type TweetFields struct {
 
 type PublishFields struct {
 	Description string    `json:"description"`
+	ImagePath   string    `json:"imagepath"`
 	CreatedAt   time.Time `json:"createdDate"`
 }
 
@@ -168,11 +169,12 @@ func FindTweet(s *Storage, colid string, user string, id string) (bool, error) {
 	return true, err
 }
 
-func InsertPublish(s *Storage, colid string, desc string) error {
+func InsertPublish(s *Storage, colid string, desc string, imgpath string) error {
 	col := s.db.Collection(colid)
 
 	doc := PublishFields{
 		Description: desc,
+		ImagePath:   imgpath,
 		CreatedAt:   time.Now(),
 	}
 
@@ -180,26 +182,28 @@ func InsertPublish(s *Storage, colid string, desc string) error {
 	return err
 }
 
-func FindPublish(s *Storage, colid string) (string, error) {
+func FindPublish(s *Storage, colid string) (string, string, error) {
 	col := s.db.Collection(colid)
 
 	var doc struct {
 		Description string             `json:"description"`
+		ImagePath   string             `json:"imagepath"`
 		ID          primitive.ObjectID `json:"id" bson:"_id"`
 	}
 	findOptions := options.FindOne()
 	err := col.FindOne(context.Background(), bson.D{}, findOptions).Decode(&doc)
 	if err == mongo.ErrNoDocuments {
-		return "", err
+		return "", "", err
 	}
 	desc := doc.Description
+	imgpath := doc.ImagePath
 
 	deleteOptions := options.Delete()
 	_, err = col.DeleteOne(context.Background(), bson.M{"_id": doc.ID}, deleteOptions)
 	if err != nil {
 		fmt.Println("delete one error:", err)
-		return "", err
+		return "", "", err
 	}
 
-	return desc, err
+	return desc, imgpath, err
 }

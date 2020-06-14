@@ -1,8 +1,11 @@
 package twitter
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/url"
 
 	"github.com/ChimeraCoder/anaconda"
 )
@@ -61,9 +64,31 @@ func SearchTweet(tw *Twitter, query string, tweets *[]anaconda.Tweet) {
 	*tweets = searchResult.Statuses
 }
 
-func PublishTweet(tw *Twitter, desc string) {
-	_, err := tw.api.PostTweet(desc, nil)
+func PublishTweet(tw *Twitter, desc string, imgpath string) {
+	v := url.Values{}
+	if len(imgpath) == 0 {
+		v = nil
+	} else {
+		base64String, err := convertImage2Base64(imgpath)
+		if err != nil {
+			v = nil
+		} else {
+			media, _ := tw.api.UploadMedia(base64String)
+			v.Add("media_ids", media.MediaIDString)
+		}
+	}
+	_, err := tw.api.PostTweet(desc, v)
 	if err != nil {
 		fmt.Println("post tweet error:", err)
 	}
+}
+
+func convertImage2Base64(imgpath string) (string, error) {
+	data, err := ioutil.ReadFile(imgpath)
+	if err != nil {
+		fmt.Println("read image error:", err)
+		return "", err
+	}
+	base64String := base64.StdEncoding.EncodeToString(data)
+	return base64String, nil
 }

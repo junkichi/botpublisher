@@ -12,7 +12,13 @@ import (
 var googleNewsRssURL = "https://news.google.com/rss/search?q=%E6%B5%A6%E5%AE%89&hl=ja&gl=JP&ceid=JP:ja"
 var googleNewsCOL = "rss"
 
-type GoogleNewsRSS struct{}
+type GoogleNewsRSS struct {
+	imgdir string
+}
+
+func (r GoogleNewsRSS) GetImageDir() string {
+	return r.imgdir
+}
 
 func (GoogleNewsRSS) Init() bool {
 	s := storage.GetInstance()
@@ -45,7 +51,7 @@ func (GoogleNewsRSS) Init() bool {
 	return true
 }
 
-func (GoogleNewsRSS) Collect() bool {
+func (GoogleNewsRSS) Collect(imgdir string) bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(googleNewsRssURL, &items)
@@ -69,7 +75,7 @@ func (GoogleNewsRSS) Collect() bool {
 			continue
 		}
 		desc := fmt.Sprintln("(News)", item.Title, item.Link)
-		err = storage.InsertPublish(s, publishCOL, desc)
+		err = storage.InsertPublish(s, publishCOL, desc, "")
 		if err != nil {
 			fmt.Println("insert error:", err)
 		}

@@ -12,7 +12,13 @@ import (
 var urayasuRssURL = "http://www.city.urayasu.lg.jp/news.rss"
 var urayasuRssCOL = "rss"
 
-type UrayasuRSS struct{}
+type UrayasuRSS struct {
+	imgdir string
+}
+
+func (r UrayasuRSS) GetImageDir() string {
+	return r.imgdir
+}
 
 func (UrayasuRSS) Init() bool {
 	s := storage.GetInstance()
@@ -45,7 +51,7 @@ func (UrayasuRSS) Init() bool {
 	return true
 }
 
-func (UrayasuRSS) Collect() bool {
+func (UrayasuRSS) Collect(imgdir string) bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
 	err := rss.RetrieveRSS(urayasuRssURL, &items)
@@ -68,8 +74,13 @@ func (UrayasuRSS) Collect() bool {
 			fmt.Println("insert error:", err)
 			continue
 		}
+		imgpath := fmt.Sprintf("%s/%d.png", imgdir, time.Now().Unix())
+		err = rss.TakeScreenShot(item.Link, `#content`, imgpath)
+		if err != nil {
+			imgpath = ""
+		}
 		desc := fmt.Sprintln("(浦安市)", item.Title, item.Link)
-		err = storage.InsertPublish(s, publishCOL, desc)
+		err = storage.InsertPublish(s, publishCOL, desc, imgpath)
 		if err != nil {
 			fmt.Println("insert error:", err)
 		}

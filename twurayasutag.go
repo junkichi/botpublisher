@@ -82,7 +82,7 @@ func (UrayasuTagTweet) Collect(query string) {
 			continue
 		}
 		desc := fmt.Sprintln("(浦安タグ)", tweet.User.Name, link)
-		err = storage.InsertPublish(s, publishCOL, desc)
+		err = storage.InsertPublish(s, publishCOL, desc, "")
 		if err != nil {
 			fmt.Println("insert error:", err)
 		}

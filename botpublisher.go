@@ -18,6 +18,7 @@ type PublisherConfig struct {
 	IntervalConfig   `json:"interval"`
 	TwitterConfig    `json:"twitter"`
 	UrayasuTagConfig `json:"urayasuTag"`
+	ScreenShotConfig `json:"screenShot"`
 }
 
 type IntervalConfig struct {
@@ -36,17 +37,21 @@ type UrayasuTagConfig struct {
 	Query string `json:"query"`
 }
 
+type ScreenShotConfig struct {
+	ImageDir string `json:"imagedir"`
+}
+
 var publishCOL = "publish"
 
 func publishDescription() {
 	s := storage.GetInstance()
-	desc, err := storage.FindPublish(s, publishCOL)
+	desc, imgpath, err := storage.FindPublish(s, publishCOL)
 	if err != nil {
 		return
 	}
-	fmt.Println("publish:", desc)
+	fmt.Println("publish:", desc, imgpath)
 	tw := twitter.GetInstance()
-	twitter.PublishTweet(tw, desc)
+	twitter.PublishTweet(tw, desc, imgpath)
 }
 
 func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
@@ -65,8 +70,9 @@ func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 }
 
 type RssCollector interface {
+	GetImageDir() string
 	Init() bool
-	Collect() bool
+	Collect(string) bool
 }
 
 func rssCollectWorker(rssCollectors []RssCollector, ticker *time.Ticker, stopCh chan struct{}, wg *sync.WaitGroup) {
@@ -87,7 +93,7 @@ func rssCollectWorker(rssCollectors []RssCollector, ticker *time.Ticker, stopCh 
 		case t := <-ticker.C:
 			fmt.Println("=== RSS Collect <", t, "> ===")
 			for _, rssCollector := range rssCollectors {
-				result := rssCollector.Collect()
+				result := rssCollector.Collect(rssCollector.GetImageDir())
 				if result == false {
 					fmt.Println("collectWorker: collect error")
 				}
@@ -153,7 +159,7 @@ func main() {
 	stopCh := make(chan struct{})
 	wg := sync.WaitGroup{}
 
-	rssCollectors := []RssCollector{GoogleNewsRSS{}, UrayasuRSS{}}
+	rssCollectors := []RssCollector{GoogleNewsRSS{""}, UrayasuRSS{publisherConfig.ScreenShotConfig.ImageDir}}
 	rssCollectTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Collect) * time.Second)
 	wg.Add(1)
 	go rssCollectWorker(rssCollectors, rssCollectTicker, stopCh, &wg)
