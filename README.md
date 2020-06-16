@@ -16,4 +16,4 @@
 - [mongo-go-driver](https://github.com/mongodb/mongo-go-driver) The Go driver for MongoDB
 
 ## License
-- This project is licensed under the MIT License
+- This project is licensed under the [MIT License](https://github.com/junkichi/botpublisher/blob/master/LICENSE)
