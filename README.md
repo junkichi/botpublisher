@@ -1,7 +1,7 @@
 # botpublisher
 [![Go Report Card](https://goreportcard.com/badge/github.com/junkichi/botpublisher)](https://goreportcard.com/report/github.com/junkichi/botpublisher) [![](https://godoc.org/github.com/junkichi/botpublisher?status.svg)](http://godoc.org/github.com/junkichi/botpublisher) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
 
-botpublisher is twitter bot to publish the update of the site and tweets of hash tags.
+`botpublisher` is twitter bot to publish the update of the site and tweets of hash tags.
 
 ## Features
 - collect the update of the site by RSS
