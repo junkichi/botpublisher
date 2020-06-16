@@ -3,6 +3,10 @@
 
 `botpublisher` is twitter bot to publish the update of the site and tweets of hash tags.
 
+## Requirements
+- [MongoDB](https://www.mongodb.com/)
+- [Google Chrome](https://www.google.co.jp/chrome/)
+
 ## Features
 - collect the update of the site by RSS
 - collect tweets of hash tags
