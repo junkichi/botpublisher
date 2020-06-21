@@ -62,6 +62,7 @@ func (GoogleNewsRSS) Collect(imgdir string) bool {
 
 	n := 0
 	skip := 0
+	old := 0
 	for _, item := range items {
 		found, err := storage.FindRSS(s, googleNewsCOL, item.Link)
 		if found == true {
@@ -74,6 +75,11 @@ func (GoogleNewsRSS) Collect(imgdir string) bool {
 			fmt.Println("insert error:", err)
 			continue
 		}
+		limitdate := time.Now().Add(-24 * 7 * time.Hour)
+		if pubdate.Before(limitdate) {
+			old++
+			continue
+		}
 		desc := fmt.Sprintln("(News)", item.Title, item.Link)
 		err = storage.InsertPublish(s, publishCOL, desc, "")
 		if err != nil {
@@ -82,6 +88,7 @@ func (GoogleNewsRSS) Collect(imgdir string) bool {
 		n++
 	}
 	fmt.Println("[gnews] skipped:", skip)
+	fmt.Println("[gnews] old:", old)
 	fmt.Println("[gnews] inserted:", n)
 
 	return true

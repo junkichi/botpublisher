@@ -62,6 +62,7 @@ func (UrayasuRSS) Collect(imgdir string) bool {
 
 	n := 0
 	skip := 0
+	old := 0
 	for _, item := range items {
 		found, err := storage.FindRSS(s, urayasuRssCOL, item.Link)
 		if found == true {
@@ -79,6 +80,11 @@ func (UrayasuRSS) Collect(imgdir string) bool {
 		if err != nil {
 			imgpath = ""
 		}
+		limitdate := time.Now().Add(-24 * 7 * time.Hour)
+		if pubdate.Before(limitdate) {
+			old++
+			continue
+		}
 		desc := fmt.Sprintln("(浦安市)", item.Title, item.Link)
 		err = storage.InsertPublish(s, publishCOL, desc, imgpath)
 		if err != nil {
@@ -87,6 +93,7 @@ func (UrayasuRSS) Collect(imgdir string) bool {
 		n++
 	}
 	fmt.Println("[urss] skipped:", skip)
+	fmt.Println("[urss] old:", old)
 	fmt.Println("[urss] inserted:", n)
 
 	return true
