@@ -47,6 +47,8 @@ type Storage struct {
 
 var dbUrl string
 var dbId string
+var dbUser string
+var dbPasswd string
 var sharedInstance *Storage
 
 func newStorage() *Storage {
@@ -55,14 +57,16 @@ func newStorage() *Storage {
 	}
 
 	fmt.Println("newStorage: ", dbUrl, dbId)
-	c := connect(dbUrl)
+	c := connect(dbUrl, dbId, dbUser, dbPasswd)
 	db := c.Database(dbId)
 	return &Storage{c, dbUrl, db, dbId}
 }
 
-func SetConfig(dburl string, dbid string) {
+func SetConfig(dburl string, dbid string, dbuser string, dbpasswd string) {
 	dbUrl = dburl
 	dbId = dbid
+	dbUser = dbuser
+	dbPasswd = dbpasswd
 }
 
 func GetInstance() *Storage {
@@ -78,10 +82,13 @@ func TermInstance() {
 	}
 }
 
-func connect(dburl string) mongo.Client {
+func connect(dburl string, dbid string, dbuser string, dbpasswd string) mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	c, err := mongo.Connect(ctx, options.Client().ApplyURI(dburl))
+
+	clientOptions := options.Client().ApplyURI(dburl).
+		SetAuth(options.Credential{AuthSource: dbid, Username: dbuser, Password: dbpasswd})
+	c, err := mongo.Connect(ctx, clientOptions)
 	err = c.Ping(ctx, readpref.Primary())
 	if err != nil {
 		fmt.Println("connection error:", err)

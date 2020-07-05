@@ -17,6 +17,7 @@ import (
 type PublisherConfig struct {
 	IntervalConfig   `json:"interval"`
 	TwitterConfig    `json:"twitter"`
+	StorageConfig    `json:"storage"`
 	UrayasuTagConfig `json:"urayasuTag"`
 	ScreenShotConfig `json:"screenShot"`
 }
@@ -31,6 +32,13 @@ type TwitterConfig struct {
 	AccessTokenSecret string `json:"accessTokenSecret"`
 	ConsumerKey       string `json:"consumerKey"`
 	ConsumerSecret    string `json:"consumerSecret"`
+}
+
+type StorageConfig struct {
+	Url    string `json:"url"`
+	Id     string `json:"id"`
+	User   string `json:"user"`
+	Passwd string `json:"passwd"`
 }
 
 type UrayasuTagConfig struct {
@@ -148,7 +156,11 @@ func main() {
 
 	var publisherConfig PublisherConfig
 	json.Unmarshal(confFile, &publisherConfig)
-	storage.SetConfig("mongodb://localhost:27017", "test")
+	storage.SetConfig(
+		publisherConfig.StorageConfig.Url,
+		publisherConfig.StorageConfig.Id,
+		publisherConfig.StorageConfig.User,
+		publisherConfig.StorageConfig.Passwd)
 	twitter.SetConfig(
 		publisherConfig.TwitterConfig.AccessToken,
 		publisherConfig.TwitterConfig.AccessTokenSecret,
