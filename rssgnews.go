@@ -75,7 +75,7 @@ func (GoogleNewsRSS) Collect(imgdir string) bool {
 			fmt.Println("insert error:", err)
 			continue
 		}
-		limitdate := time.Now().Add(-24 * 7 * time.Hour)
+		limitdate := time.Now().Add(-24 * 1 * time.Hour)
 		if pubdate.Before(limitdate) {
 			old++
 			continue
