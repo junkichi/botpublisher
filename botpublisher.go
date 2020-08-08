@@ -39,8 +39,8 @@ type TwitterConfig struct {
 
 // StorageConfig is the configration of database
 type StorageConfig struct {
-	Url    string `json:"url"`
-	Id     string `json:"id"`
+	URL    string `json:"url"`
+	ID     string `json:"id"`
 	User   string `json:"user"`
 	Passwd string `json:"passwd"`
 }
@@ -165,8 +165,8 @@ func main() {
 	var publisherConfig PublisherConfig
 	json.Unmarshal(confFile, &publisherConfig)
 	storage.SetConfig(
-		publisherConfig.StorageConfig.Url,
-		publisherConfig.StorageConfig.Id,
+		publisherConfig.StorageConfig.URL,
+		publisherConfig.StorageConfig.ID,
 		publisherConfig.StorageConfig.User,
 		publisherConfig.StorageConfig.Passwd)
 	twitter.SetConfig(
