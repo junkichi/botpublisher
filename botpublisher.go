@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"botpublisher/storage"
-	"botpublisher/twitter"
+	"github.com/junkichi/botpublisher/storage"
+	"github.com/junkichi/botpublisher/twitter"
 )
 
 type PublisherConfig struct {

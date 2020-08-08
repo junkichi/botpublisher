@@ -1,10 +1,11 @@
 package main
 
 import (
-	"botpublisher/rss"
-	"botpublisher/storage"
 	"fmt"
 	"time"
+
+	"github.com/junkichi/botpublisher/rss"
+	"github.com/junkichi/botpublisher/storage"
 
 	"github.com/mmcdole/gofeed"
 )

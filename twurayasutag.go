@@ -1,10 +1,11 @@
 package main
 
 import (
-	"botpublisher/storage"
-	"botpublisher/twitter"
 	"fmt"
 	"time"
+
+	"github.com/junkichi/botpublisher/storage"
+	"github.com/junkichi/botpublisher/twitter"
 
 	"github.com/ChimeraCoder/anaconda"
 )
