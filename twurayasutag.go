@@ -12,14 +12,17 @@ import (
 
 var urayasuTagTweetCOL = "tweet"
 
+// UrayasuTagTweet is the value of query stringß
 type UrayasuTagTweet struct {
 	query string
 }
 
+// GetQuery the store value
 func (t UrayasuTagTweet) GetQuery() string {
 	return t.query
 }
 
+// Init the tweet by query string
 func (UrayasuTagTweet) Init(query string) {
 	s := storage.GetInstance()
 	tw := twitter.GetInstance()
@@ -54,6 +57,7 @@ func (UrayasuTagTweet) Init(query string) {
 	fmt.Println("[utag] inserted:", n)
 }
 
+// Collect the tweet by query string
 func (UrayasuTagTweet) Collect(query string) {
 	s := storage.GetInstance()
 	tw := twitter.GetInstance()

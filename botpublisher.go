@@ -14,6 +14,7 @@ import (
 	"github.com/junkichi/botpublisher/twitter"
 )
 
+// PublisherConfig is the configrations of botpublisher
 type PublisherConfig struct {
 	IntervalConfig   `json:"interval"`
 	TwitterConfig    `json:"twitter"`
@@ -22,11 +23,13 @@ type PublisherConfig struct {
 	ScreenShotConfig `json:"screenShot"`
 }
 
+// IntervalConfig is the configration of processing interval
 type IntervalConfig struct {
 	Collect int `json:"collect"`
 	Publish int `json:"publish"`
 }
 
+// TwitterConfig is the configration of tweet api
 type TwitterConfig struct {
 	AccessToken       string `json:"accessToken"`
 	AccessTokenSecret string `json:"accessTokenSecret"`
@@ -34,6 +37,7 @@ type TwitterConfig struct {
 	ConsumerSecret    string `json:"consumerSecret"`
 }
 
+// StorageConfig is the configration of database
 type StorageConfig struct {
 	Url    string `json:"url"`
 	Id     string `json:"id"`
@@ -41,10 +45,12 @@ type StorageConfig struct {
 	Passwd string `json:"passwd"`
 }
 
+// UrayasuTagConfig is the configration of twitter search
 type UrayasuTagConfig struct {
 	Query string `json:"query"`
 }
 
+// ScreenShotConfig is the configration of image directory
 type ScreenShotConfig struct {
 	ImageDir string `json:"imagedir"`
 }
@@ -77,6 +83,7 @@ func publishWorker(publisherConfig PublisherConfig, ticker *time.Ticker, stopCh 
 	}
 }
 
+// RssCollector is the interface of collecting RSS
 type RssCollector interface {
 	GetImageDir() string
 	Init() bool
@@ -110,6 +117,7 @@ func rssCollectWorker(rssCollectors []RssCollector, ticker *time.Ticker, stopCh 
 	}
 }
 
+// TweetCollector is the interface of collecting Tweet
 type TweetCollector interface {
 	GetQuery() string
 	Init(string)

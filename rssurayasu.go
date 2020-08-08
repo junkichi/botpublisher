@@ -13,14 +13,17 @@ import (
 var urayasuRssURL = "http://www.city.urayasu.lg.jp/news.rss"
 var urayasuRssCOL = "rss"
 
+// UrayasuRSS is the value of image directory
 type UrayasuRSS struct {
 	imgdir string
 }
 
+// GetImageDir the stored balue
 func (r UrayasuRSS) GetImageDir() string {
 	return r.imgdir
 }
 
+// Init the RSS
 func (UrayasuRSS) Init() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
@@ -52,6 +55,7 @@ func (UrayasuRSS) Init() bool {
 	return true
 }
 
+// Collect the RSS
 func (UrayasuRSS) Collect(imgdir string) bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item

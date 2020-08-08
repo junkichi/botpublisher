@@ -13,14 +13,17 @@ import (
 var googleNewsRssURL = "https://news.google.com/rss/search?q=%E6%B5%A6%E5%AE%89&hl=ja&gl=JP&ceid=JP:ja"
 var googleNewsCOL = "rss"
 
+// GoogleNewsRSS is the value of iamge directory
 type GoogleNewsRSS struct {
 	imgdir string
 }
 
+// GetImageDir the stored value
 func (r GoogleNewsRSS) GetImageDir() string {
 	return r.imgdir
 }
 
+// Init the RSS
 func (GoogleNewsRSS) Init() bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
@@ -52,6 +55,7 @@ func (GoogleNewsRSS) Init() bool {
 	return true
 }
 
+// Collect the RSS
 func (GoogleNewsRSS) Collect(imgdir string) bool {
 	s := storage.GetInstance()
 	var items []*gofeed.Item
