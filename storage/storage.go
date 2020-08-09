@@ -124,12 +124,13 @@ func InsertRSS(s *Storage, colid string, title string, link string, desc string,
 	return err
 }
 
-func FindRSS(s *Storage, colid string, link string) (bool, error) {
+func FindRSS(s *Storage, colid string, link string, pubdate time.Time) (bool, error) {
 	col := s.db.Collection(colid)
 
 	filter := struct {
-		Link string
-	}{link}
+		Link        string
+		PublishedAt time.Time
+	}{link, pubdate}
 
 	var doc bson.Raw
 	findOptions := options.FindOne()

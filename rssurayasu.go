@@ -36,12 +36,12 @@ func (UrayasuRSS) Init() bool {
 	n := 0
 	skip := 0
 	for _, item := range items {
-		found, err := storage.FindRSS(s, urayasuRssCOL, item.Link)
+		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", item.Published)
+		found, err := storage.FindRSS(s, urayasuRssCOL, item.Link, pubdate)
 		if found == true {
 			skip++
 			continue
 		}
-		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", item.Published)
 		err = storage.InsertRSS(s, urayasuRssCOL, item.Title, item.Link, item.Description, pubdate)
 		if err != nil {
 			fmt.Println("insert error:", err)
@@ -69,12 +69,12 @@ func (UrayasuRSS) Collect(imgdir string) bool {
 	skip := 0
 	old := 0
 	for _, item := range items {
-		found, err := storage.FindRSS(s, urayasuRssCOL, item.Link)
+		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", item.Published)
+		found, err := storage.FindRSS(s, urayasuRssCOL, item.Link, pubdate)
 		if found == true {
 			skip++
 			continue
 		}
-		pubdate, _ := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", item.Published)
 		err = storage.InsertRSS(s, urayasuRssCOL, item.Title, item.Link, item.Description, pubdate)
 		if err != nil {
 			fmt.Println("insert error:", err)
