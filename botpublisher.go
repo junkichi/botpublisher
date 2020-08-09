@@ -179,7 +179,7 @@ func main() {
 	stopCh := make(chan struct{})
 	wg := sync.WaitGroup{}
 
-	rssCollectors := []RssCollector{GoogleNewsRSS{""}, UrayasuRSS{publisherConfig.ScreenShotConfig.ImageDir}}
+	rssCollectors := []RssCollector{GoogleNewsRSS{""}, UrayasuRSS{publisherConfig.ScreenShotConfig.ImageDir}, ChibaRSS{publisherConfig.ScreenShotConfig.ImageDir}}
 	rssCollectTicker := time.NewTicker(time.Duration(publisherConfig.IntervalConfig.Collect) * time.Second)
 	wg.Add(1)
 	go rssCollectWorker(rssCollectors, rssCollectTicker, stopCh, &wg)
