@@ -37,7 +37,7 @@ func (ChibaRSS) Init() bool {
 	n := 0
 	skip := 0
 	for _, item := range items {
-		pubdate, _ := time.Parse("2006-01-02T15:04:05Z07:00", item.Published)
+		pubdate, _ := time.Parse("Mon, 02 Jan 2006 15:04:05 MST", item.Published)
 		found, err := storage.FindRSS(s, chibaRssCOL, item.Link, pubdate)
 		if found == true {
 			skip++
